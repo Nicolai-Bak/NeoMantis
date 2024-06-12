@@ -23,6 +23,13 @@ require('lazy').setup({
 		end,
 		},
 	  'christoomey/vim-tmux-navigator',
+	{
+		'nvim-telescope/telescope.nvim',
+		branch = '0.1.x',
+		dependencies = {
+		'nvim-lua/plenary.nvim'
+		},
+	},
   { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
     dependencies = {
