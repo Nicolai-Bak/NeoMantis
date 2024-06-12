@@ -80,6 +80,7 @@ require('lazy').setup({
       'nvim-lua/plenary.nvim',
     },
   },
+  { 'numToStr/Comment.nvim', opts = {} },
   {
     'folke/which-key.nvim',
     event = 'VimEnter',
