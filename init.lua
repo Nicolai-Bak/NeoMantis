@@ -17,7 +17,7 @@ vim.opt.smartcase = true -- but become when capital letters is used
 
 -- Decrease mapped sequence wait time
 -- Displays which-key popup sooner
-vim.opt.timeoutlen = 200
+vim.opt.timeoutlen = 300
 
 vim.opt.signcolumn = 'yes' -- always make room in left margin for signs
 
@@ -36,10 +36,11 @@ vim.opt.scrolloff = 5 -- keep this number of lines above or below curser when sc
 
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>') -- clear search highlight on <Esc> but does not clear search
 
+-- TODO: Come up with good keymapping for this to be a good idea..
 -- The m marks the current position, and the backticks (```) are used to jump back to this mark
 -- Keymaps requires low timeoutlen to be useful
-vim.keymap.set('n', 'oo', 'm`o<Esc>``', { desc = 'Insert line below' })
-vim.keymap.set('n', 'OO', 'm`O<Esc>``', { desc = 'Insert line above' })
+-- vim.keymap.set('n', 'oo', 'm`o<Esc>``', { desc = 'Insert line below' })
+-- vim.keymap.set('n', 'OO', 'm`O<Esc>``', { desc = 'Insert line above' })
 
 -- Highlight on yank
 vim.api.nvim_create_autocmd('TextYankPost', {
@@ -79,26 +80,28 @@ require('lazy').setup({
       'nvim-lua/plenary.nvim',
     },
   },
+  {
+    'folke/which-key.nvim',
+    event = 'VimEnter',
+    config = function()
+      require('which-key').setup()
+    end,
+  },
   { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
-      { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
+      { 'williamboman/mason.nvim', config = true },
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
-      -- Useful status updates for LSP.
-      -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
+      -- Lower right hand corner updated from LSP
       { 'j-hui/fidget.nvim', opts = {} },
 
       -- LUA LSP with comp, annotations, and signatures for Neovim apis used in config, runtime and plugins
       { 'folke/neodev.nvim', opts = {} },
     },
     config = function()
-      -- LSP servers and clients are able to communicate to each other what features they support.
-      --  By default, Neovim doesn't support everything that is in the LSP specification.
-      --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
-      --  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
@@ -117,9 +120,7 @@ require('lazy').setup({
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for tsserver)
+            -- Making sure to overriding setting from ensure_installed list
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
             require('lspconfig')[server_name].setup(server)
           end,
