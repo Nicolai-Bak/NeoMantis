@@ -73,6 +73,7 @@ require('lazy').setup({
     end,
   },
   'christoomey/vim-tmux-navigator',
+  { 'lewis6991/gitsigns.nvim', opts = {} },
   {
     'nvim-telescope/telescope.nvim',
     branch = '0.1.x',
@@ -159,7 +160,9 @@ require('lazy').setup({
         'folke/trouble.nvim',
         cmd = 'Trouble',
         -- TODO: Add keybinding for trouble
-        opts = {},
+        opts = {
+          use_diagnostic_signs = true,
+        },
       },
     },
     opts = {},
