@@ -73,6 +73,7 @@ require('lazy').setup({
     end,
   },
   'christoomey/vim-tmux-navigator',
+  'tpope/vim-sleuth', -- Better indentation automatically
   { 'lewis6991/gitsigns.nvim', opts = {} },
   {
     'nvim-telescope/telescope.nvim',
