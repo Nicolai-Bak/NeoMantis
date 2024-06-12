@@ -86,6 +86,20 @@ require('lazy').setup({
       'hrsh7th/cmp-nvim-lsp',
 },
 },
+	{
+		'folke/todo-comments.nvim',
+		event = 'VimEnter',
+		dependencies = {
+		'nvim-lua/plenary.nvim',
+			{
+			'folke/trouble.nvim',
+				cmd = "Trouble",
+				-- TODO: Add keybinding for trouble
+				opts= {},
+			},
+		},
+		opts = {},
+	},
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
