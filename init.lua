@@ -15,6 +15,8 @@ vim.opt.breakindent = true -- keeps indentation of broken lines
 vim.opt.ignorecase = true -- default not casesensitive
 vim.opt.smartcase = true -- but become when capital letters is used
 
+vim.opt.updatetime = 250 -- e.g. time for visual changes from lsp
+
 -- Decrease mapped sequence wait time
 -- Displays which-key popup sooner
 vim.opt.timeoutlen = 300
@@ -72,7 +74,7 @@ require('lazy').setup({
       vim.cmd.colorscheme('tokyonight-storm')
     end,
   },
-  'christoomey/vim-tmux-navigator',
+  { 'christoomey/vim-tmux-navigator', event = 'VimEnter' },
   'tpope/vim-sleuth', -- Better indentation automatically
   { 'lewis6991/gitsigns.nvim', opts = {} },
   {
@@ -92,6 +94,7 @@ require('lazy').setup({
   },
   { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
+    event = { 'BufReadPost', 'BufNewFile', 'BufWritePre' },
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
       { 'williamboman/mason.nvim', config = true },
@@ -105,6 +108,34 @@ require('lazy').setup({
       { 'folke/neodev.nvim', opts = {} },
     },
     config = function()
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = vim.api.nvim_create_augroup('lsp-attach', { clear = true }),
+        callback = function(event)
+          local client = vim.lsp.get_client_by_id(event.data.client_id)
+          if client and client.server_capabilities.documentHighlightProvider then
+            local highlight_augroup = vim.api.nvim_create_augroup('lsp-highlight', { clear = false })
+            vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+              buffer = event.buf,
+              group = highlight_augroup,
+              callback = vim.lsp.buf.document_highlight,
+            })
+
+            vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+              buffer = event.buf,
+              group = highlight_augroup,
+              callback = vim.lsp.buf.clear_references,
+            })
+
+            vim.api.nvim_create_autocmd('LspDetach', {
+              group = vim.api.nvim_create_augroup('lsp-detach', { clear = true }),
+              callback = function(event2)
+                vim.lsp.buf.clear_references()
+                vim.api.nvim_clear_autocmds({ group = 'lsp-highlight', buffer = event2.buf })
+              end,
+            })
+          end
+        end,
+      })
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
@@ -134,9 +165,32 @@ require('lazy').setup({
   { -- Autocompletion
     'hrsh7th/nvim-cmp',
     event = 'InsertEnter',
+    opts = {},
     dependencies = {
       'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-path',
     },
+    config = function()
+      local cmp = require('cmp')
+      cmp.setup({
+        completion = { completeopt = 'menu,menuone,noinsert' },
+        mapping = cmp.mapping.preset.insert({
+          ['<C-n>'] = cmp.mapping.select_next_item(),
+          ['<C-p>'] = cmp.mapping.select_prev_item(),
+
+          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+          ['<C-f>'] = cmp.mapping.scroll_docs(4),
+
+          ['<C-y>'] = cmp.mapping.confirm({ select = true }),
+          ['<C-Space>'] = cmp.mapping.complete({}),
+        }),
+        sources = {
+          { name = 'nvim_lsp' },
+          { name = 'luasnip' },
+          { name = 'path' },
+        },
+      })
+    end,
   },
   {
     'stevearc/conform.nvim',
@@ -170,6 +224,7 @@ require('lazy').setup({
   },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    event = { 'BufReadPost', 'BufNewFile', 'BufWritePre', 'User' },
     build = ':TSUpdate',
     opts = {
       ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc' },
@@ -185,5 +240,11 @@ require('lazy').setup({
       require('nvim-treesitter.install').prefer_git = true
       require('nvim-treesitter.configs').setup(opts)
     end,
+  },
+}, {
+  defaults = {
+    -- TODO: Be clever enough to set lazy = false. Requires more knowledge on event and when to load
+    lazy = false,
+    version = false,
   },
 })
